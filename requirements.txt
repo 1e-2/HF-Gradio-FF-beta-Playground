@@ -1,0 +1,10 @@
+--extra-index-url https://download.pytorch.org/whl/cu113
+torch
+accelerate==0.18.0
+diffusers==0.16.0
+gradio==3.30.0
+safetensors==0.3.0
+torchvision==0.15.1
+transformers==4.28.1
+xformers==0.0.18
+numpy
