@@ -54,48 +54,44 @@ class Model:
         images = [PIL.Image.fromarray(np.array(img)) for img in images]
         return images
 
-
-
-
-                    
-def generateImage(prompt, n_prompt, modelName, schedulerName):
-    images = models[modelName].process(prompt, n_prompt)
-    images = [np.array(img) for img in images]
-    return images[0]  # Return the first image
+def generateImage(prompt, modelNames, schedulerName):
+    n_prompt = '(disfigured), ((bad art)), ((deformed)), ((extra limbs)), (((duplicate))), ((morbid)), ((mutilated)), out of frame, extra fingers, mutated hands, poorly drawn eyes, ((poorly drawn hands)), ((poorly drawn face)), (((mutation))), ((ugly)), blurry, ((bad anatomy)), (((bad proportions))), cloned face, body out of frame, out of frame, bad anatomy, gross proportions, (malformed limbs), ((missing arms)), ((missing legs)), (((extra arms))), (((extra legs))), (fused fingers), (too many fingers), (((long neck))), Deformed, blurry'
+    images = []
+    for modelName in modelNames:
+        image = models[modelName].process(prompt, n_prompt)
+        images.append(np.array(image[0]))  # Return the first image
+    return images
 
 def create_demo():
     # Settings are defined here
-    prompt = gr.inputs.Textbox(label='Prompt',default='a sprinkled donut sitting on top of a table, blender donut tutorial, colorful hyperrealism, everything is made of candy, hyperrealistic digital painting, covered in sprinkles and crumbs, vibrant colors hyper realism, colorful smoke explosion background')
-    n_prompt = gr.inputs.Textbox(
-        label='Negative Prompt',
-        default='(disfigured), ((bad art)), ((deformed)), ((extra limbs)), (((duplicate))), ((morbid)), ((mutilated)), out of frame, extra fingers, mutated hands, poorly drawn eyes, ((poorly drawn hands)), ((poorly drawn face)), (((mutation))), ((ugly)), blurry, ((bad anatomy)), (((bad proportions))), cloned face, body out of frame, out of frame, bad anatomy, gross proportions, (malformed limbs), ((missing arms)), ((missing legs)), (((extra arms))), (((extra legs))), (fused fingers), (too many fingers), (((long neck))), Deformed, blurry'
-    )
-    modelName = gr.inputs.Dropdown(choices=list(models.keys()), 
-                                   label="FFusion Test Model",
-                                   default=list(models.keys())[0])  # Set the default model
+    prompt = gr.inputs.Textbox(label='Prompt',default='a sprinkled donut sitting on top of a purple cherry apple, colorful hyperrealism')
+    modelNames = gr.inputs.CheckboxGroup(choices=list(models.keys()), 
+                                         label="FFusion Test Models",
+                                         default=list(models.keys()))  # Set all models as default
     schedulerName = gr.inputs.Dropdown(choices=list(schedulers.keys()), 
                                        label="Scheduler",
                                        default=list(schedulers.keys())[0])  # Set the default scheduler
-    inputs = [prompt, n_prompt, modelName, schedulerName]
+    inputs = [prompt, modelNames, schedulerName]
 
     # Images are displayed here
-    result = gr.outputs.Image(label='Output', type="numpy")
+    result = [gr.outputs.Image(label=f'Output from {model}', type="numpy") for model in models.keys()]
 
     # Define the function to run when the button is clicked
-    def run(prompt, n_prompt, modelName, schedulerName):
-        return generateImage(prompt, n_prompt, modelName, schedulerName)
+    def run(prompt, modelNames, schedulerName):
+        images = generateImage(prompt, modelNames, schedulerName)
+        return images
 
     # Create the interface
     iface = gr.Interface(
-    fn=run,
-    inputs=inputs,
-    outputs=result,
-    layout=[
-        gr.Markdown("### FFusion.AI - beta Playground"),
-        inputs,
-        result
-    ]
-)
+        fn=run,
+        inputs=inputs,
+        outputs=result,
+        layout=[
+            gr.Markdown("### FFusion.AI - beta Playground"),
+            inputs,
+            result
+        ]
+    )
 
     return iface
 
@@ -103,7 +99,7 @@ if __name__ == '__main__':
     models = {
         "FFUSION.ai-768-BaSE": Model("FFusion/FFusion-BaSE", list(schedulers.keys())[0]),
         "FFUSION.ai-v2.1-768-BaSE-alpha-preview": Model("FFusion/di.FFUSION.ai-v2.1-768-BaSE-alpha", list(schedulers.keys())[0]),
-    "FFusion.ai.Beta-512": Model("FFusion/di.ffusion.ai.Beta512", list(schedulers.keys())[0])
+        "FFusion.ai.Beta-512": Model("FFusion/di.ffusion.ai.Beta512", list(schedulers.keys())[0])
     }
     demo = create_demo()
     demo.launch()
